@@ -6,13 +6,9 @@
 namespace cmpth {
 
 template <typename P>
-struct sct_task_pool_base_policy
-{
-private:
-    using lv4_itf_type = typename P::lv4_itf_type;
-    
+struct basic_sct_task_pool_base_policy {
 public:
-    using element_type = typename lv4_itf_type::task_desc;
+    using element_type = typename P::task_desc_type;
     
     template <typename Pool>
     static fdn::size_t get_pool_threshold(Pool& pool) {
@@ -30,28 +26,25 @@ public:
 };
 
 template <typename P>
-class sct_task_pool
-    : public P::lv4_itf_type::template pool_t<sct_task_pool_base_policy<P>>
+class basic_sct_task_pool
+    : public P::template memory_pool_t<basic_sct_task_pool_base_policy<P>>
 {
-    using lv4_itf_type = typename P::lv4_itf_type;
-    using base = typename lv4_itf_type::template pool_t<sct_task_pool_base_policy<P>>;
+    using base = typename P::template memory_pool_t<basic_sct_task_pool_base_policy<P>>;
     
-    using worker_type           = typename lv4_itf_type::worker;
-    using call_stack_type       = typename lv4_itf_type::call_stack;
-    using task_ref_type         = typename lv4_itf_type::task_ref;
-    using unique_task_ptr_type  = typename lv4_itf_type::unique_task_ptr;
+    using worker_type           = typename P::worker_type;
+    using call_stack_type       = typename P::call_stack_type;
+    using task_ref_type         = typename P::task_ref_type;
+    using unique_task_ptr_type  = typename P::unique_task_ptr_type;
     
     using typename base::node;
     
 public:
     using base::base;
     
-    call_stack_type allocate(worker_type& wk)
-    {
+    call_stack_type allocate(worker_type& wk) {
         const auto wk_num = wk.get_worker_num();
         
         const auto desc = base::allocate(wk_num, on_create{ *this });
-        
         desc->finished.store(false, fdn::memory_order_relaxed);
         
         return call_stack_type{ unique_task_ptr_type{ desc } };
@@ -59,7 +52,7 @@ public:
     
 private:
     struct on_create {
-        sct_task_pool& self;
+        basic_sct_task_pool& self;
         node* operator() () {
             auto size = this->self.def_size_;
             auto alloc_p = new fdn::byte[size];
@@ -81,8 +74,7 @@ private:
     };
     
 public:
-    void deallocate(worker_type& wk, task_ref_type tk)
-    {
+    void deallocate(worker_type& wk, task_ref_type tk) {
         const auto wk_num = wk.get_worker_num();
         base::deallocate(wk_num, tk.get_task_desc());
     }
