@@ -3,6 +3,14 @@
 
 A composable, policy-based user-level thread library.
 
+## Paper
+
+Please refer to the following paper about the design of this system:
+
+Wataru Endo, Shigeyuki Sato, Kenjiro Taura:  
+__[ComposableThreads: Rethinking User-level Threads with Composability and Parametricity in C++](https://doi.org/10.2197/ipsjjip.30.269)__.  
+Journal of Information Processing (JIP). 2022. Volume 30, Pages 269-282.  
+
 ## Design decisions
 
 - Header-only.
